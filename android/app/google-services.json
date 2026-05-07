@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "157045997944",
+    "project_id": "bd-panttony",
+    "storage_bucket": "bd-panttony.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157045997944:android:4dbd5ee4cd36236b96088d",
+        "android_client_info": {
+          "package_name": "app.panttony"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpFtEeCVdibvMIAtuQeH9nrVpmnOQ4zvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
