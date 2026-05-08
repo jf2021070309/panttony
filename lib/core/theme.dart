@@ -5,8 +5,9 @@ class AppColors {
   static const Color primary = Color(0xFFD4830A); // Panttony Orange
   static const Color secondary = Color(0xFF1E1E1E); // Dark Grey
   static const Color accent = Color(0xFFFFA500);
-  static const Color background = Color(0xFFF8F9FA);
+   static const Color background = Color(0xFFFDF5E6); // Parchment/Cream
   static const Color surface = Colors.white;
+  static const Color cardBg = Color(0xFFFFF8EC); // Lighter cream for cards
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF388E3C);
   static const Color textPrimary = Color(0xFF212121);
@@ -24,13 +25,16 @@ class AppTheme {
         surface: AppColors.surface,
         error: AppColors.error,
       ),
-      textTheme: GoogleFonts.outfitTextTheme(),
-      appBarTheme: AppBarTheme(
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(fontSize: 16),
+        bodyMedium: TextStyle(fontSize: 14),
+      ),
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.bold,
@@ -44,7 +48,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: GoogleFonts.outfit(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -65,7 +69,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
-        labelStyle: GoogleFonts.outfit(color: AppColors.textSecondary),
+        labelStyle: const TextStyle(color: AppColors.textSecondary),
       ),
     );
   }

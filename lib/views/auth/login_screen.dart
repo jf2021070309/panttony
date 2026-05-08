@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,16 +12,23 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
   void _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, completa todos los campos')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
     bool success = await auth.login(
-      _usernameController.text.trim().toLowerCase(),
+      _emailController.text.trim(),
       _passwordController.text.trim()
     );
 
@@ -29,24 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       if (mounted) {
-        switch (auth.currentUserRole) {
-          case UserRole.cliente:
-            Navigator.pushReplacementNamed(context, '/menu');
-            break;
-          case UserRole.empleado:
-            Navigator.pushReplacementNamed(context, '/admin');
-            break;
-          case UserRole.repartidor:
-            Navigator.pushReplacementNamed(context, '/deliverer');
-            break;
-          default:
-            break;
-        }
+        await Future.delayed(const Duration(milliseconds: 500));
+        Navigator.pushReplacementNamed(context, '/main');
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Credenciales incorrectas (Usa: cliente/123, empleado/123, etc.)')),
+          const SnackBar(content: Text('Correo o contraseña incorrectos')),
         );
       }
     }
@@ -74,17 +70,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 48),
-                  TextField(
-                    controller: _usernameController,
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'Usuario',
-                      prefixIcon: Icon(Icons.person_outline),
+                      labelText: 'Correo Electrónico',
+                      prefixIcon: Icon(Icons.email_outlined),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  TextField(
+                  TextFormField(
                     controller: _passwordController,
                     obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleLogin(),
                     decoration: const InputDecoration(
                       labelText: 'Contraseña',
                       prefixIcon: Icon(Icons.lock_outline),
@@ -94,16 +94,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const SizedBox(
+                            height: 20, 
+                            width: 20, 
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                          )
                         : const Text('Entrar'),
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: TextButton(
-                      onPressed: _initializeData,
-                      child: const Text('¿Primera vez? Inicializar Base de Datos', 
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                    ),
                   ),
                 ],
               ),
@@ -114,54 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _initializeData() async {
-    setState(() => _isLoading = true);
-    try {
-      final firestore = FirebaseFirestore.instance;
-      
-      // Insertar Productos
-      final products = [
-        {'id': 'q1', 'name': 'Tres Quesos', 'price': 4.0, 'category': 'queso', 'description': 'Empanada de tres quesos'},
-        {'id': 'c1', 'name': 'Rocoto Relleno', 'price': 7.5, 'category': 'criolla', 'description': 'Sabor arequipeño'},
-      ];
-
-      for (var p in products) {
-        await firestore.collection('productos').doc(p['id'] as String).set(p);
-      }
-
-      // Insertar Usuarios de prueba
-      await firestore.collection('usuarios').doc('client_001').set({
-        'nombre': 'Cliente Prueba',
-        'rol': 'cliente',
-        'id': 'client_001'
-      });
-      await firestore.collection('usuarios').doc('employee_001').set({
-        'nombre': 'Admin Panttony',
-        'rol': 'empleado',
-        'id': 'employee_001'
-      });
-      await firestore.collection('usuarios').doc('repartidor_001').set({
-        'nombre': 'Juan Motos',
-        'rol': 'repartidor',
-        'id': 'repartidor_001'
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Base de datos inicializada con éxito')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al inicializar: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
   Widget _buildHeader() {
     return Container(
       height: 300,
@@ -170,18 +118,27 @@ class _LoginScreenState extends State<LoginScreen> {
         color: AppColors.primary,
         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(80)),
       ),
-      child: const Column(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.delivery_dining, size: 100, color: Colors.white),
-          SizedBox(height: 16),
-          Text(
-            'Panttony App',
+          // Logo artesanal de Panttony (puedes reemplazar por Image.asset si tienes el logo)
+          const Icon(Icons.restaurant_menu, size: 80, color: Colors.white),
+          const SizedBox(height: 16),
+          const Text(
+            'Panttony',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: 40,
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              letterSpacing: 2,
+              fontFamily: 'Outfit', // Usa tu fuente moderna
+            ),
+          ),
+          const Text(
+            'DELIVERY',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white70,
+              letterSpacing: 4,
             ),
           ),
         ],

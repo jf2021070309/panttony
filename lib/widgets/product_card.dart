@@ -6,95 +6,139 @@ import '../providers/menu_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
+  final bool isAdmin;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  const ProductCard({super.key, required this.product});
+  const ProductCard({
+    super.key, 
+    required this.product,
+    this.isAdmin = false,
+    this.onEdit,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final menuProvider = Provider.of<MenuProvider>(context, listen: false);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Product Image
-              Container(
-                width: 100,
-                color: AppColors.primary.withOpacity(0.1),
-                child: product.imageUrl.isNotEmpty
-                    ? Image.network(product.imageUrl, fit: BoxFit.cover)
-                    : const Icon(Icons.fastfood, size: 40, color: AppColors.primary),
-              ),
-              // Product Details
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        product.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Stack(
+        children: [
+          // Main Card Body
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            decoration: BoxDecoration(
+              color: AppColors.cardBg,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Product Info (Name Badge + Description)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'S/ ${product.price.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          // Name Badge (The orange rounded tag from the image)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
                               color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              product.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
-                          _buildQuantitySelector(context, menuProvider),
+                          const SizedBox(height: 8),
+                          // Description
+                          Text(
+                            product.description,
+                            style: TextStyle(
+                              color: AppColors.textPrimary.withOpacity(0.8),
+                              fontSize: 14,
+                              height: 1.3,
+                            ),
+                          ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Price Bubble (The circular price tag from the image)
+                    Column(
+                      children: [
+                        Container(
+                          width: 65,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(25),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            's/ ${product.price.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (!isAdmin) _buildQuantitySelector(context, menuProvider),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                // Admin Actions
+                if (isAdmin) ...[
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        label: const Text('Editar'),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: onDelete,
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        label: const Text('Borrar'),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.error),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildQuantitySelector(BuildContext context, MenuProvider provider) {
-    final qty = Provider.of<MenuProvider>(context).cart[product.id] ?? 0;
+    // Usamos context.select para escuchar solo el cambio específico de este producto en el carrito
+    final qty = context.select<MenuProvider, int>((p) => p.cart[product.id] ?? 0);
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (qty > 0) ...[
           _CircleButton(
@@ -102,7 +146,7 @@ class ProductCard extends StatelessWidget {
             onTap: () => provider.removeFromCart(product.id),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
               '$qty',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -135,14 +179,23 @@ class _CircleButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary : Colors.grey[200],
+          color: isPrimary ? AppColors.primary : Colors.white,
           shape: BoxShape.circle,
+          border: Border.all(color: isPrimary ? AppColors.primary : Colors.grey[300]!),
+          boxShadow: [
+            if (isPrimary)
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+          ],
         ),
         child: Icon(
           icon,
-          size: 20,
+          size: 18,
           color: isPrimary ? Colors.white : AppColors.textPrimary,
         ),
       ),

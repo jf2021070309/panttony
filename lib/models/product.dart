@@ -7,6 +7,7 @@ class Product {
   final double price;
   final String imageUrl;
   final ProductCategory category;
+  final bool isAvailable;
 
   Product({
     required this.id,
@@ -15,6 +16,7 @@ class Product {
     required this.price,
     required this.imageUrl,
     required this.category,
+    this.isAvailable = true,
   });
 
   factory Product.fromFirestore(Map<String, dynamic> data, String id) {
@@ -27,6 +29,7 @@ class Product {
       category: data['category'] == 'criolla' 
           ? ProductCategory.criolla 
           : ProductCategory.queso,
+      isAvailable: data['isAvailable'] ?? true,
     );
   }
 
@@ -37,6 +40,7 @@ class Product {
       'price': price,
       'imageUrl': imageUrl,
       'category': category.name,
+      'isAvailable': isAvailable,
     };
   }
 }

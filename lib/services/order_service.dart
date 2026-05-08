@@ -13,7 +13,7 @@ class OrderService {
   Stream<List<OrderModel>> getPendingOrders() {
     return _firestore
         .collection('pedidos')
-        .where('status', isEqualTo: 'pendiente')
+        .where('status', whereIn: ['pendiente', 'confirmado', 'enPreparacion', 'asignado'])
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => OrderModel.fromFirestore(doc.data(), doc.id))

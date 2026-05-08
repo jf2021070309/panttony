@@ -3,18 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum OrderStatus {
   pendiente,
   confirmado,
-  en_preparacion,
+  enPreparacion,
   asignado,
-  en_camino,
+  enCamino,
   entregado;
 
   String get displayName {
     switch (this) {
       case OrderStatus.pendiente: return 'Pendiente';
       case OrderStatus.confirmado: return 'Confirmado';
-      case OrderStatus.en_preparacion: return 'En preparación';
+      case OrderStatus.enPreparacion: return 'En preparación';
       case OrderStatus.asignado: return 'Asignado';
-      case OrderStatus.en_camino: return 'En camino';
+      case OrderStatus.enCamino: return 'En camino';
       case OrderStatus.entregado: return 'Entregado';
     }
   }
